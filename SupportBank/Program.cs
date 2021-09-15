@@ -2,16 +2,32 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 
 namespace SupportBank
 {
     public class Program
     {
+        private static readonly ILogger Logger = LogManager.GetCurrentClassLogger();
+
         public static void Main(string[] args)
         {
+            // Set up NLog
+            var config = new LoggingConfiguration();
+            var target = new FileTarget
+            {
+                FileName = @"C:/Users/benjaminb/Work/Logs/SupportBank.log",
+                Layout = @"${longdate} ${level} - ${logger}: ${message}"
+            };
+            config.AddTarget("File Logger", target);
+            config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, target));
+            LogManager.Configuration = config;
+
+            Logger.Debug("The program has started");
+
             Console.Write("(List All) balances or (List [name]) the transactions for a specific user: ");
             string option = Console.ReadLine();
 
@@ -21,14 +37,16 @@ namespace SupportBank
             {
                 ListAll(balances);
             }
-            else if (Regex.IsMatch(option, @""))
+            else if (Regex.IsMatch(option, @"List \[\w+\s*\w+\]"))
             {
                 string name = option.Split('[', ']')[1];
                 Console.WriteLine("Listing transactions for " + name);
                 balances[name].ShowTransactions();
             }
-
-            //balances["Jon A"].ShowTransactions();
+            else
+            {
+                Console.WriteLine("Invalid option entered");
+            }
 
             Console.WriteLine("done");
             Console.ReadLine();
@@ -36,7 +54,7 @@ namespace SupportBank
 
         private static Dictionary<string, Person> CalculateBalances()
         {
-            string path = "C:/Users/benjaminb/Work/Training/SupportBank/Transactions2014.csv";
+            string path = "C:/Users/benjaminb/Work/Training/SupportBank/DodgyTransactions2015.csv";
 
             string[] rows = File.ReadAllLines(path).Skip(1).ToArray();
 
@@ -47,11 +65,27 @@ namespace SupportBank
             {
                 // Get the values for the row
                 string[] rowVals = row.Split(',');
-                DateTime transactionDate = DateTime.Parse(rowVals[0]);
+                DateTime transactionDate = new DateTime();
+                try
+                {
+                    transactionDate = DateTime.Parse(rowVals[0]);
+                }
+                catch
+                {
+                    Logger.Debug("Invalid date");
+                }
                 string pFrom = rowVals[1];
                 string pTo = rowVals[2];
                 string narrative = rowVals[3];
-                decimal transactionAmount = Convert.ToDecimal(rowVals[4]);
+                decimal transactionAmount = 0;
+                try
+                {
+                    transactionAmount = Convert.ToDecimal(rowVals[4]);
+                }
+                catch
+                {
+                    Logger.Debug("Amount is not a number");
+                }
 
                 // Check whether the people in the current transaction are already in the dictionary of people
                 // If not, add them
