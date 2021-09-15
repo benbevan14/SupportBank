@@ -22,5 +22,11 @@ namespace SupportBank
             Narrative = narrative;
             Amount = amount;
         }
+
+        public void Show()
+        {
+            string message = String.Format("On {0}, {1} paid {2} £{3} for {4}", Date.ToString("d"), To.Name, From.Name, Amount.ToString("0.00"), Narrative);
+            Console.WriteLine(message);
+        }
     }
 }

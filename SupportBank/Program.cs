@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace SupportBank
@@ -10,6 +11,30 @@ namespace SupportBank
     public class Program
     {
         public static void Main(string[] args)
+        {
+            Console.Write("(List All) balances or (List [name]) the transactions for a specific user: ");
+            string option = Console.ReadLine();
+
+            Dictionary<string, Person> balances = CalculateBalances();
+
+            if (option == "List All")
+            {
+                ListAll(balances);
+            }
+            else if (Regex.IsMatch(option, @""))
+            {
+                string name = option.Split('[', ']')[1];
+                Console.WriteLine("Listing transactions for " + name);
+                balances[name].ShowTransactions();
+            }
+
+            //balances["Jon A"].ShowTransactions();
+
+            Console.WriteLine("done");
+            Console.ReadLine();
+        }
+
+        private static Dictionary<string, Person> CalculateBalances()
         {
             string path = "C:/Users/benjaminb/Work/Training/SupportBank/Transactions2014.csv";
 
@@ -53,13 +78,29 @@ namespace SupportBank
                 people[pTo].Pay(t.Amount);
             }
 
+            /*
             foreach (var p in people)
             {
                 Console.WriteLine(p.Key + ": " + p.Value.Balance);
             }
+            */
 
-            Console.WriteLine("done");
-            Console.ReadLine();
+            return people;
+        }
+
+        private static void ListAll(Dictionary<string, Person> balances)
+        {
+            foreach (var item in balances)
+            {
+                if (item.Value.Balance > 0)
+                {
+                    Console.WriteLine($"{item.Value.Name} is owed £{item.Value.Balance}");
+                }
+                else
+                {
+                    Console.WriteLine($"{item.Value.Name} owes £{Math.Abs(item.Value.Balance)}");
+                }
+            }
         }
     }
 }

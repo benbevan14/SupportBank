@@ -33,5 +33,13 @@ namespace SupportBank
         {
             Transactions.Add(t);
         }
+
+        public void ShowTransactions()
+        {
+            foreach (Transaction t in Transactions)
+            {
+                t.Show();
+            }
+        }
     }
 }
