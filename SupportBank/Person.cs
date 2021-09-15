@@ -9,7 +9,7 @@ namespace SupportBank
     public class Person
     {
         public string Name { get; set; }
-        public float Balance { get; set; }
+        public decimal Balance { get; set; }
         public List<Transaction> Transactions { get; set; }
 
         public Person(string name)
@@ -19,12 +19,12 @@ namespace SupportBank
             Transactions = new List<Transaction>();
         }
 
-        public void Pay(float amount)
+        public void Pay(decimal amount)
         {
             Balance += amount;
         }
 
-        public void Deduct(float amount)
+        public void Deduct(decimal amount)
         {
             Balance -= amount;
         }
