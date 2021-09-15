@@ -1,0 +1,37 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SupportBank
+{
+    public class Person
+    {
+        public string Name { get; set; }
+        public float Balance { get; set; }
+        public List<Transaction> Transactions { get; set; }
+
+        public Person(string name)
+        {
+            Name = name;
+            Balance = 0;
+            Transactions = new List<Transaction>();
+        }
+
+        public void Pay(float amount)
+        {
+            Balance += amount;
+        }
+
+        public void Deduct(float amount)
+        {
+            Balance -= amount;
+        }
+
+        public void AddTransaction(Transaction t)
+        {
+            Transactions.Add(t);
+        }
+    }
+}
