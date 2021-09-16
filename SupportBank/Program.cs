@@ -36,9 +36,9 @@ namespace SupportBank
             string option = Console.ReadLine();
 
             // Path to the file to read data from
-            string path = "C:/Users/benjaminb/Work/Training/SupportBank/Transactions2014.csv";
+            string path = "C:/Users/benjaminb/Work/Training/SupportBank/Transactions2013.json";
 
-            Dictionary<string, Person> balances = CalculateBalances(path);
+            List<Person> balances = CalculateBalances(path);
 
             if (option == "List All")
             {
@@ -48,7 +48,7 @@ namespace SupportBank
             {
                 string name = option.Split('[', ']')[1];
                 Console.WriteLine("Listing transactions for " + name);
-                balances[name].ShowTransactions();
+                balances.Find(i => i.Name == name).ShowTransactions();
             }
             else
             {
@@ -59,7 +59,7 @@ namespace SupportBank
             Console.ReadLine();
         }
 
-        private static Dictionary<string, Person> CalculateBalances(string path)
+        private static List<Person> CalculateBalances(string path)
         {
             List<Transaction> transactions = GetTransactions(path);
 
@@ -99,7 +99,7 @@ namespace SupportBank
             }
             */
 
-            return people;
+            return people.Values.ToList();
         }
 
         private static List<Transaction> GetTransactions(string path)
@@ -147,17 +147,17 @@ namespace SupportBank
             return transactions;
         }
 
-        private static void ListAll(Dictionary<string, Person> balances)
+        private static void ListAll(List<Person> balances)
         {
             foreach (var item in balances)
             {
-                if (item.Value.Balance > 0)
+                if (item.Balance > 0)
                 {
-                    Console.WriteLine($"{item.Value.Name} is owed £{item.Value.Balance}");
+                    Console.WriteLine($"{item.Name} is owed £{item.Balance}");
                 }
                 else
                 {
-                    Console.WriteLine($"{item.Value.Name} owes £{Math.Abs(item.Value.Balance)}");
+                    Console.WriteLine($"{item.Name} owes £{Math.Abs(item.Balance)}");
                 }
             }
         }

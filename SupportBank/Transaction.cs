@@ -11,8 +11,10 @@ namespace SupportBank
     {
         public DateTime Date { get; set; }
         [JsonProperty("FromAccount")]
+        [JsonConverter(typeof(PersonConverter))]
         public Person From { get; set; }
         [JsonProperty("ToAccount")]
+        [JsonConverter(typeof(PersonConverter))]
         public Person To { get; set; }
         public string Narrative { get; set; }
         public decimal Amount { get; set; }
