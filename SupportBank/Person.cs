@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace SupportBank
 {
+    [JsonObject(MemberSerialization.OptIn)]
     public class Person
     {
+        [JsonProperty]
         public string Name { get; set; }
+        [JsonProperty]
         public decimal Balance { get; set; }
         public List<Transaction> Transactions { get; set; }
 

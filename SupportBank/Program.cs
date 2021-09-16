@@ -51,22 +51,24 @@ namespace SupportBank
             Console.Write("(List All) balances or (List [name]) the transactions for a specific user: ");
             string option = Console.ReadLine();
 
-            List<Person> balances = CalculateBalances(path);
+            List<Person> people = CalculateBalances(path);
 
             if (option == "List All")
             {
-                ListAll(balances);
+                ListAll(people);
             }
             else if (Regex.IsMatch(option, @"List \[\w+\s*\w+\]"))
             {
                 string name = option.Split('[', ']')[1];
                 Console.WriteLine("Listing transactions for " + name);
-                balances.Find(person => person.Name == name).ShowTransactions();
+                people.Find(person => person.Name == name).ShowTransactions();
             }
             else
             {
                 Console.WriteLine("Invalid option entered");
             }
+
+            WriteFile(people);
 
             Console.WriteLine("done");
             Console.ReadLine();
@@ -197,19 +199,25 @@ namespace SupportBank
             return transactions;
         }
 
-        private static void ListAll(List<Person> balances)
+        private static void ListAll(List<Person> people)
         {
-            foreach (var item in balances)
+            foreach (var person in people)
             {
-                if (item.Balance > 0)
+                if (person.Balance > 0)
                 {
-                    Console.WriteLine($"{item.Name} is owed £{item.Balance}");
+                    Console.WriteLine($"{person.Name} is owed £{person.Balance}");
                 }
                 else
                 {
-                    Console.WriteLine($"{item.Name} owes £{Math.Abs(item.Balance)}");
+                    Console.WriteLine($"{person.Name} owes £{Math.Abs(person.Balance)}");
                 }
             }
+        }
+
+        private static void WriteFile(List<Person> people)
+        {
+            string newPath = @"C:/Users/benjaminb/Work/Training/SupportBank/Balances.json";
+            File.WriteAllText(newPath, JsonConvert.SerializeObject(people, Newtonsoft.Json.Formatting.Indented));
         }
     }
 }
