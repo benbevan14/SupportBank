@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace SupportBank
 {
     public class Transaction
     {
         public DateTime Date { get; set; }
-        public Person To { get; set; }
+        [JsonProperty("FromAccount")]
         public Person From { get; set; }
+        [JsonProperty("ToAccount")]
+        public Person To { get; set; }
         public string Narrative { get; set; }
         public decimal Amount { get; set; }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
@@ -15,6 +16,7 @@ namespace SupportBank
 
         public static void Main(string[] args)
         {
+            // #######################################
             // Set up NLog
             var config = new LoggingConfiguration();
             var target = new FileTarget
@@ -25,13 +27,18 @@ namespace SupportBank
             config.AddTarget("File Logger", target);
             config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, target));
             LogManager.Configuration = config;
+            // #######################################
 
             Logger.Debug("The program has started");
 
+            // Read in the option to list balances for all users or a specific user
             Console.Write("(List All) balances or (List [name]) the transactions for a specific user: ");
             string option = Console.ReadLine();
 
-            Dictionary<string, Person> balances = CalculateBalances();
+            // Path to the file to read data from
+            string path = "C:/Users/benjaminb/Work/Training/SupportBank/Transactions2014.csv";
+
+            Dictionary<string, Person> balances = CalculateBalances(path);
 
             if (option == "List All")
             {
@@ -52,64 +59,37 @@ namespace SupportBank
             Console.ReadLine();
         }
 
-        private static Dictionary<string, Person> CalculateBalances()
+        private static Dictionary<string, Person> CalculateBalances(string path)
         {
-            string path = "C:/Users/benjaminb/Work/Training/SupportBank/DodgyTransactions2015.csv";
-
-            string[] rows = File.ReadAllLines(path).Skip(1).ToArray();
+            List<Transaction> transactions = GetTransactions(path);
 
             // Dictionary of unique people referenced in the file, accessed by name
             Dictionary<string, Person> people = new Dictionary<string, Person>();
 
-            foreach (string row in rows)
+            foreach (Transaction t in transactions)
             {
-                // Get the values for the row
-                string[] rowVals = row.Split(',');
-                DateTime transactionDate = new DateTime();
-                try
-                {
-                    transactionDate = DateTime.Parse(rowVals[0]);
-                }
-                catch
-                {
-                    Logger.Debug("Invalid date");
-                }
-                string pFrom = rowVals[1];
-                string pTo = rowVals[2];
-                string narrative = rowVals[3];
-                decimal transactionAmount = 0;
-                try
-                {
-                    transactionAmount = Convert.ToDecimal(rowVals[4]);
-                }
-                catch
-                {
-                    Logger.Debug("Amount is not a number");
-                }
-
+                string fromName = t.From.Name;
+                string toName = t.To.Name;
                 // Check whether the people in the current transaction are already in the dictionary of people
                 // If not, add them
-                if (!people.TryGetValue(pFrom, out Person pf))
+                if (!people.TryGetValue(fromName, out Person pf))
                 {
-                    people.Add(pFrom, new Person(pFrom));
+                    people.Add(fromName, t.From);
                 }
-                if (!people.TryGetValue(pTo, out Person pt))
+                if (!people.TryGetValue(toName, out Person pt))
                 {
-                    people.Add(pTo, new Person(pTo));
+                    people.Add(toName, t.To);
                 }
-
-                // Create a transaction object
-                Transaction t = new Transaction(transactionDate, people[pFrom], people[pTo], narrative, transactionAmount);
 
                 // Add the transaction to pFrom and pTo's list
-                people[pFrom].AddTransaction(t);
-                people[pTo].AddTransaction(t);
+                people[fromName].AddTransaction(t);
+                people[toName].AddTransaction(t);
 
                 // Deduct the transaction amount from pFrom
-                people[pFrom].Deduct(t.Amount);
+                people[fromName].Deduct(t.Amount);
 
                 // Add the transaction amount to pTo
-                people[pTo].Pay(t.Amount);
+                people[toName].Pay(t.Amount);
             }
 
             /*
@@ -120,6 +100,51 @@ namespace SupportBank
             */
 
             return people;
+        }
+
+        private static List<Transaction> GetTransactions(string path)
+        {
+            List<Transaction> transactions = new List<Transaction>();
+
+            if (path.EndsWith(".csv"))
+            {
+                string[] rows = File.ReadAllLines(path).Skip(1).ToArray();
+
+                foreach (string row in rows)
+                {
+                    string[] vals = row.Split(',');
+                    DateTime date = new DateTime();
+                    try
+                    {
+                        date = DateTime.Parse(vals[0]);
+                    }
+                    catch
+                    {
+                        Logger.Debug("Invalid date");
+                    }
+                    string pFrom = vals[1];
+                    string pTo = vals[2];
+                    string narrative = vals[3];
+                    decimal amount = 0;
+                    try
+                    {
+                        amount = Convert.ToDecimal(vals[4]);
+                    }
+                    catch
+                    {
+                        Logger.Debug("Amount is not a number");
+                    }
+
+                    transactions.Add(new Transaction(date, new Person(pFrom), new Person(pTo), narrative, amount));
+                }
+
+                return transactions;
+            }
+            else if (path.EndsWith(".json"))
+            {
+                transactions = JsonConvert.DeserializeObject<List<Transaction>>(File.ReadAllText(path));
+            }
+            return transactions;
         }
 
         private static void ListAll(Dictionary<string, Person> balances)
