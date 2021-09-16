@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Xml;
 using Newtonsoft.Json;
 using NLog;
 using NLog.Config;
@@ -31,12 +32,24 @@ namespace SupportBank
 
             Logger.Debug("The program has started");
 
+            // Read in the path to the input file
+            Console.WriteLine("Enter the file to be read: (2012.xml, 2013.json, 2014.csv)");
+            string year = Console.ReadLine();
+            string path = "C:/Users/benjaminb/Work/Training/SupportBank/Transactions" + year;
+
+            // Check the file exists otherwise keep asking
+            while (!File.Exists(path))
+            {
+                Console.WriteLine("Invalid filepath, try again");
+                year = Console.ReadLine();
+                path = "C:/Users/benjaminb/Work/Training/SupportBank/Transactions" + year;
+            }
+
+            Console.WriteLine("\nSuccessfully read file: Transactions" + year + '\n');
+
             // Read in the option to list balances for all users or a specific user
             Console.Write("(List All) balances or (List [name]) the transactions for a specific user: ");
             string option = Console.ReadLine();
-
-            // Path to the file to read data from
-            string path = "C:/Users/benjaminb/Work/Training/SupportBank/Transactions2013.json";
 
             List<Person> balances = CalculateBalances(path);
 
@@ -48,7 +61,7 @@ namespace SupportBank
             {
                 string name = option.Split('[', ']')[1];
                 Console.WriteLine("Listing transactions for " + name);
-                balances.Find(i => i.Name == name).ShowTransactions();
+                balances.Find(person => person.Name == name).ShowTransactions();
             }
             else
             {
@@ -143,6 +156,43 @@ namespace SupportBank
             else if (path.EndsWith(".json"))
             {
                 transactions = JsonConvert.DeserializeObject<List<Transaction>>(File.ReadAllText(path));
+            }
+            else if (path.EndsWith(".xml"))
+            {
+                XmlTextReader reader = new XmlTextReader(path);
+
+                DateTime date = new DateTime();
+                Person from = null;
+                Person to = null;
+                string narrative = "";
+                decimal amount = 0;
+
+                while (reader.Read())
+                {
+                    if (reader.IsStartElement())
+                    {
+                        switch (reader.Name.ToString())
+                        {
+                            case "SupportTransaction":
+                                date = DateTime.FromOADate(double.Parse(reader.GetAttribute("Date")));
+                                break;
+                            case "Description":
+                                narrative = reader.ReadString();
+                                break;
+                            case "Value":
+                                amount = Convert.ToDecimal(reader.ReadString());
+                                break;
+                            case "From":
+                                from = new Person(reader.ReadString());
+                                break;
+                            case "To":
+                                to = new Person(reader.ReadString());
+                                Transaction t = new Transaction(date, from, to, narrative, amount);
+                                transactions.Add(t);
+                                break;
+                        }
+                    }
+                }
             }
             return transactions;
         }
